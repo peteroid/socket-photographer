@@ -1,0 +1,19 @@
+<body>
+  <div>
+    <button class="btn-shoot">Shoot</button>
+  </div>
+
+  <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+
+    $(document).ready(function () {
+
+      $('.btn-shoot').click(function () {
+        socket.emit("shoot")
+      })
+
+    })
+  </script>
+</body>

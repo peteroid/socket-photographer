@@ -19,6 +19,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.koushikdutta.ion.Ion;
+import com.koushikdutta.ion.loader.StreamLoader;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,17 +43,20 @@ public class MainActivity extends AppCompatActivity {
 
     Socket socket;
     static final int REQUEST_IMAGE_CAPTURE = 1;
-    static final String SOCKET_SERVER = "http://719b4cc8.ngrok.io";
+    static final String SOCKET_SERVER = "http://32fdcd99.ngrok.io";
 //    static final String SOCKET_SERVER = "http://172.31.113.115:8080";
 
     String deviceName = String.format("%s-%s", Build.MODEL, Build.SERIAL).replaceAll(" ", "_");
 
-    TextView textCount;
+    TextView textCount, textStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        textCount = (TextView) findViewById(R.id.text_count);
+        textStatus = (TextView) findViewById(R.id.text_status);
 
         Ion.getDefault(this)
                 .configure()
@@ -64,12 +68,25 @@ public class MainActivity extends AppCompatActivity {
             socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
                 @Override
                 public void call(Object... args) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            textStatus.setText("Connected");
+                        }
+                    });
                     socket.emit("device", deviceName);
                     socket.on("shoot", new Emitter.Listener() {
                         @Override
                         public void call(Object... args) {
                             try {
                                 JSONObject obj = (JSONObject) args[0];
+                                final String shootTimeStr = obj.getString("timestamp");
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        textStatus.setText(shootTimeStr);
+                                    }
+                                });
                                 Long shootTime = Long.valueOf(obj.getString("timestamp")) + 8000;
                                 Log.d("broadcast", "shoot it at " + String.valueOf(shootTime));
                                 Date date = new Date(shootTime);
@@ -86,6 +103,12 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void call(Object... args) {
                     Log.d("Socket", "Connect Error");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            textStatus.setText("Error");
+                        }
+                    });
                 }
             });
 
@@ -113,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        textCount = (TextView) findViewById(R.id.text_count);
+
     }
 
     @Override
@@ -173,13 +196,16 @@ public class MainActivity extends AppCompatActivity {
             }
         }, shootTime);
 
+        long startTime = SystemClock.uptimeMillis();
+        final long endTime = shootTime.getTime() - System.currentTimeMillis() + startTime;
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        textCount.setText(String.valueOf(Math.round((shootTime.getTime() - System.currentTimeMillis()) / 1000.0)));
+                        textStatus.setText(String.valueOf(System.currentTimeMillis()));
+                        textCount.setText(String.valueOf((shootTime.getTime() - System.currentTimeMillis()) / 1000.0));
                     }
                 });
             }

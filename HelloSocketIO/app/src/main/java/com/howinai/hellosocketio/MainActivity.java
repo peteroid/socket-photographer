@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
     String deviceName = String.format("%s-%s", Build.MODEL, Build.SERIAL).replaceAll(" ", "_");
 
-    TextView textCount, textStatus;
+    TextView textCount, textStatus, textTimestamp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +57,18 @@ public class MainActivity extends AppCompatActivity {
 
         textCount = (TextView) findViewById(R.id.text_count);
         textStatus = (TextView) findViewById(R.id.text_status);
+        textTimestamp = (TextView) findViewById(R.id.text_timestamp);
+//        new Timer().scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        textTimestamp.setText(String.valueOf(System.currentTimeMillis()));
+//                    }
+//                });
+//            }
+//        }, 0, 100);
 
         Ion.getDefault(this)
                 .configure()
@@ -196,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }, shootTime);
 
+
         long startTime = SystemClock.uptimeMillis();
         final long endTime = shootTime.getTime() - System.currentTimeMillis() + startTime;
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -205,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         textStatus.setText(String.valueOf(System.currentTimeMillis()));
-                        textCount.setText(String.valueOf((shootTime.getTime() - System.currentTimeMillis()) / 1000.0));
+                        textCount.setText(String.valueOf((int) Math.floor(((shootTime.getTime() - System.currentTimeMillis()) / 1000.0))));
                     }
                 });
             }

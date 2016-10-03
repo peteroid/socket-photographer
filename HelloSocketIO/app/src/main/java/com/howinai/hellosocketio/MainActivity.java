@@ -1,6 +1,7 @@
 package com.howinai.hellosocketio;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.os.AsyncTask;
@@ -8,6 +9,7 @@ import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.preference.Preference;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
@@ -43,12 +45,16 @@ public class MainActivity extends AppCompatActivity {
 
     Socket socket;
     static final int REQUEST_IMAGE_CAPTURE = 1;
-    static final String SOCKET_SERVER = "http://32fdcd99.ngrok.io";
+    static final String SOCKET_SERVER = "http://1218a097.ngrok.io";
 //    static final String SOCKET_SERVER = "http://172.31.113.115:8080";
 
     String deviceName = String.format("%s-%s", Build.MODEL, Build.SERIAL).replaceAll(" ", "_");
 
-    TextView textCount, textStatus;
+    TextView textCount, textStatus, textTimestamp;
+    Button btnTimeUp, btnTimeDown;
+
+    private long timeMillisDelay = 0;
+    private final static String PREF_TIME_DELAY = "pref.time.delay";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +63,35 @@ public class MainActivity extends AppCompatActivity {
 
         textCount = (TextView) findViewById(R.id.text_count);
         textStatus = (TextView) findViewById(R.id.text_status);
+        textTimestamp = (TextView) findViewById(R.id.text_timestamp);
+        new Timer().scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        textTimestamp.setText(String.valueOf(getTunedCurrentTimeMillis()));
+                    }
+                });
+            }
+        }, 0, 100);
+
+        btnTimeUp = (Button) findViewById(R.id.btn_time_up);
+        btnTimeDown = (Button) findViewById(R.id.btn_time_down);
+
+        btnTimeDown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                timeMillisDelay -= 300;
+            }
+        });
+
+        btnTimeUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                timeMillisDelay += 300;
+            }
+        });
 
         Ion.getDefault(this)
                 .configure()
@@ -87,10 +122,9 @@ public class MainActivity extends AppCompatActivity {
                                         textStatus.setText(shootTimeStr);
                                     }
                                 });
-                                Long shootTime = Long.valueOf(obj.getString("timestamp")) + 8000;
+                                Long shootTime = Long.valueOf(obj.getString("timestamp")) + 8000 - timeMillisDelay;
                                 Log.d("broadcast", "shoot it at " + String.valueOf(shootTime));
-                                Date date = new Date(shootTime);
-                                dispatchTakePictureIntent(date);
+                                dispatchTakePictureIntent(new Date(shootTime));
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -135,23 +169,31 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+    }
 
-
+    private long getTunedCurrentTimeMillis() {
+        return System.currentTimeMillis() + timeMillisDelay;
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         socket.disconnect();
+        this.getPreferences(MODE_PRIVATE)
+                .edit()
+                .putLong(MainActivity.PREF_TIME_DELAY, timeMillisDelay)
+                .apply();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         socket.connect();
+        this.timeMillisDelay = this.getPreferences(MODE_PRIVATE)
+                .getLong(MainActivity.PREF_TIME_DELAY, 0);
     }
 
-    private void dispatchTakePictureIntent(final Date shootTime) {
+    private void dispatchTakePictureIntent(final Date shootDate) {
 
         final Camera mCamera;
         try {
@@ -183,29 +225,27 @@ public class MainActivity extends AppCompatActivity {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                Log.d("Timer", "run " + String.valueOf(System.currentTimeMillis()));
+                Log.d("Timer", "run " + String.valueOf(getTunedCurrentTimeMillis()));
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Log.d("runOnUi", "shoot now " + String.valueOf(System.currentTimeMillis()));
+                        Log.d("runOnUi", "shoot now " + String.valueOf(getTunedCurrentTimeMillis()));
                         // Attach a callback for preview
                         mCamera.setPreviewCallback(new CamCallback(MainActivity.this));
                         timer.cancel();
                     }
                 });
             }
-        }, shootTime);
+        }, shootDate);
 
-        long startTime = SystemClock.uptimeMillis();
-        final long endTime = shootTime.getTime() - System.currentTimeMillis() + startTime;
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        textStatus.setText(String.valueOf(System.currentTimeMillis()));
-                        textCount.setText(String.valueOf((shootTime.getTime() - System.currentTimeMillis()) / 1000.0));
+                        textStatus.setText(String.valueOf(getTunedCurrentTimeMillis()));
+                        textCount.setText(String.valueOf((int) Math.floor(((shootDate.getTime() - System.currentTimeMillis()) / 1000.0))));
                     }
                 });
             }

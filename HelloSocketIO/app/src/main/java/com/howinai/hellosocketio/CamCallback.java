@@ -29,7 +29,7 @@ public class CamCallback implements Camera.PreviewCallback{
 
     Activity activity;
     Context context;
-
+    private static final boolean isLandscapeImage = true;
 
     public CamCallback(Activity a) {
         this.context = a.getApplicationContext();
@@ -67,13 +67,20 @@ public class CamCallback implements Camera.PreviewCallback{
                 Camera.Size size = parameters.getPreviewSize();
 
                 // rotate the image before saving
-                byte[] rotatedData = rotateYUV420Degree90(previewData[0], size.width, size.height);
+                byte[] rotatedData = previewData[0];
+                int rotatedHeight = size.height;
+                int rotatedWidth = size.width;
+                if (!CamCallback.isLandscapeImage) {
+                    rotatedData = rotateYUV420Degree90(previewData[0], size.width, size.height);
+                    rotatedHeight = size.width;
+                    rotatedWidth = size.height;
+                }
 //                byte[] data = previewData[0];
 
 
                 Log.d("Preview params", String.format("%d x %d, %s", size.width, size.height, parameters.getPreviewFormat()));
                 YuvImage image = new YuvImage(rotatedData, parameters.getPreviewFormat(),
-                        size.height, size.width, null); // swap the height and width for rotation
+                        rotatedWidth, rotatedHeight, null); // swap the height and width for rotation
 
                 File savingFolder = new File(Environment.getExternalStorageDirectory()
                         .getPath() + "/temp_pictures");

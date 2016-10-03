@@ -9,6 +9,40 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.howinai.hellosocketio.MainActivity">
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="+50"
+                android:id="@+id/btn_time_up"/>
+
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="-50"
+                android:id="@+id/btn_time_down"/>
+
+        </LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="123456789"
+            android:textSize="25dp"
+            android:id="@+id/text_timestamp"/>
+    </LinearLayout>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -52,7 +86,5 @@
             android:text="Shoot All"/>
 
     </LinearLayout>
-
-
 
 </RelativeLayout>

@@ -1,12 +1,12 @@
-var app = require('express')();
+var express = require('express');
+var app = express()
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var multer = require('multer');
 
-
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, __dirname + '/uploads')
+    cb(null, __dirname + '/static/uploads')
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname)
@@ -19,10 +19,15 @@ var upload = multer({
 
 const port = 8080
 
+app.use(express.static('static'))
+
 app.post('/upload', upload.single('image'), function (req, res, next) {
   console.log('file: %s', JSON.stringify(req.file));
   if (req.file) {
     res.json({'response':"Saved"});
+    io.emit('img', {
+      path: '/uploads/' + req.file.filename
+    })
   } else {
     res.json({'response':"No file"});
   }
@@ -67,8 +72,9 @@ io.on('connection', function(socket){
 
   socket.on('shoot', _ => {
     console.log('server got shoot')
+    var timestamp = Date.now()
     io.emit('shoot', {
-      timestamp: Date.now()
+      timestamp: timestamp
     })
   }) 
 

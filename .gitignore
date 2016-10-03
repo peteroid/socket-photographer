@@ -87,3 +87,5 @@ captures/
 
 # custom
 uploads/*
+models/*
+static/*

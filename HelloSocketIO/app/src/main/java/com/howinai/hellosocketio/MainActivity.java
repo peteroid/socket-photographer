@@ -45,13 +45,14 @@ public class MainActivity extends AppCompatActivity {
 
     Socket socket;
     static final int REQUEST_IMAGE_CAPTURE = 1;
-    static final String SOCKET_SERVER = "http://1218a097.ngrok.io";
-//    static final String SOCKET_SERVER = "http://172.31.113.115:8080";
+//    static final String SOCKET_SERVER = "http://1218a097.ngrok.io";
+    static final String SOCKET_SERVER = "http://192.168.0.59:8080";
 
     String deviceName = String.format("%s-%s", Build.MODEL, Build.SERIAL).replaceAll(" ", "_");
 
     TextView textCount, textStatus, textTimestamp;
     Button btnTimeUp, btnTimeDown;
+    Camera mCamera;
 
     private long timeMillisDelay = 0;
     private final static String PREF_TIME_DELAY = "pref.time.delay";
@@ -169,6 +170,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+        initCameraPreview();
     }
 
     private long getTunedCurrentTimeMillis() {
@@ -193,11 +196,9 @@ public class MainActivity extends AppCompatActivity {
                 .getLong(MainActivity.PREF_TIME_DELAY, 0);
     }
 
-    private void dispatchTakePictureIntent(final Date shootDate) {
-
-        final Camera mCamera;
+    private void initCameraPreview() {
         try {
-            mCamera = Camera.open(0);
+            this.mCamera = Camera.open(0);
         } catch (RuntimeException e) {
             return;
         }
@@ -221,6 +222,9 @@ public class MainActivity extends AppCompatActivity {
                 preview.addView(camPreview);
             }
         });
+    }
+
+    private void dispatchTakePictureIntent(final Date shootDate) {
         final Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override

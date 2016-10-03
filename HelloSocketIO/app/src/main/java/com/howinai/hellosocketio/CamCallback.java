@@ -43,9 +43,9 @@ public class CamCallback implements Camera.PreviewCallback{
 
         new SavePhotoTask(millis, camera.getParameters()).execute(data);
 
-        camera.stopPreview();
+//        camera.stopPreview();
         camera.setPreviewCallback(null);
-        camera.release();
+//        camera.release();
     }
 
     class SavePhotoTask extends AsyncTask<byte[], String, Integer> {

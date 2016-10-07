@@ -46,13 +46,15 @@ public class MainActivity extends AppCompatActivity {
     Socket socket;
     static final int REQUEST_IMAGE_CAPTURE = 1;
 //    static final String SOCKET_SERVER = "http://1218a097.ngrok.io";
-    static final String SOCKET_SERVER = "http://192.168.0.59:8080";
+    static final String SOCKET_SERVER = "http://192.168.1.42:8080";
 
     String deviceName = String.format("%s-%s", Build.MODEL, Build.SERIAL).replaceAll(" ", "_");
 
     TextView textCount, textStatus, textTimestamp;
     Button btnTimeUp, btnTimeDown;
     Camera mCamera;
+    CamPreview camPreview;
+    FrameLayout preview;
 
     private long timeMillisDelay = 0;
     private final static String PREF_TIME_DELAY = "pref.time.delay";
@@ -117,13 +119,14 @@ public class MainActivity extends AppCompatActivity {
                             try {
                                 JSONObject obj = (JSONObject) args[0];
                                 final String shootTimeStr = obj.getString("timestamp");
+                                int shootDelay = obj.getInt("delay");
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         textStatus.setText(shootTimeStr);
                                     }
                                 });
-                                Long shootTime = Long.valueOf(obj.getString("timestamp")) + 8000 - timeMillisDelay;
+                                Long shootTime = Long.valueOf(obj.getString("timestamp")) + shootDelay - timeMillisDelay;
                                 Log.d("broadcast", "shoot it at " + String.valueOf(shootTime));
                                 dispatchTakePictureIntent(new Date(shootTime));
                             } catch (JSONException e) {
@@ -171,7 +174,8 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        initCameraPreview();
+        preview = (FrameLayout) findViewById(R.id.cameraView);
+//        initCameraPreview();
     }
 
     private long getTunedCurrentTimeMillis() {
@@ -186,6 +190,12 @@ public class MainActivity extends AppCompatActivity {
                 .edit()
                 .putLong(MainActivity.PREF_TIME_DELAY, timeMillisDelay)
                 .apply();
+
+        if (mCamera != null) {
+            mCamera.setPreviewCallback(null);
+            camPreview.setSurfaceTextureListener(null);
+            mCamera.release();
+        }
     }
 
     @Override
@@ -194,6 +204,8 @@ public class MainActivity extends AppCompatActivity {
         socket.connect();
         this.timeMillisDelay = this.getPreferences(MODE_PRIVATE)
                 .getLong(MainActivity.PREF_TIME_DELAY, 0);
+
+        initCameraPreview();
     }
 
     private void initCameraPreview() {
@@ -206,15 +218,16 @@ public class MainActivity extends AppCompatActivity {
         Camera.Size biggestSize = sizes.get(0);
 
         Camera.Parameters parameters = mCamera.getParameters();
+        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         parameters.setPreviewSize(biggestSize.width, biggestSize.height);
         mCamera.setParameters(parameters);
 
-        final CamPreview camPreview = new CamPreview(this, mCamera);
+        camPreview = new CamPreview(this, mCamera);
         camPreview.setSurfaceTextureListener(camPreview);
 
         // Connect the preview object to a FrameLayout in your UI
         // You'll have to create a FrameLayout object in your UI to place this preview in
-        final FrameLayout preview = (FrameLayout) findViewById(R.id.cameraView);
+//        preview = (FrameLayout) findViewById(R.id.cameraView);
 
         runOnUiThread(new Runnable() {
             @Override
@@ -250,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         textStatus.setText(String.valueOf(getTunedCurrentTimeMillis()));
                         textCount.setText(String.valueOf((int) Math.floor(((shootDate.getTime() - System.currentTimeMillis()) / 1000.0))));
+//                        mCamera.autoFocus();
                     }
                 });
             }

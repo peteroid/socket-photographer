@@ -9,7 +9,7 @@ var storage = multer.diskStorage({
     cb(null, __dirname + '/static/uploads')
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname)
+    cb(null, String(shootCount) + '_' + file.originalname.replace('image_', ''))
   }
 })
 
@@ -35,10 +35,11 @@ app.post('/upload', upload.single('image'), function (req, res, next) {
 });
 
 app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/static/index.html');
 });
 
 var availableDevices = []
+var shootCount = 0
 io.on('connection', function(socket){
   console.log('a device connected');
 
@@ -70,11 +71,13 @@ io.on('connection', function(socket){
     showAllDevices()
   });
 
-  socket.on('shoot', _ => {
-    console.log('server got shoot')
+  socket.on('shoot', e => {
+    console.log('server got shoot: %s', JSON.stringify(e))
     var timestamp = Date.now()
+    shootCount++
     io.emit('shoot', {
-      timestamp: timestamp
+      timestamp: timestamp,
+      delay: e.delay
     })
   }) 
 

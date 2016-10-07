@@ -1,0 +1,55 @@
+<style type="text/css">
+  img {
+    max-width: 200px;
+    max-height: 200px;
+  }
+
+  .block-imgs {
+    margin: 20px;
+  }
+</style>
+
+<body>
+  <div>
+    <h1 id="text-timestamp"></h1>
+    <input type="number" id="input-delay" value="5" />
+    <button class="btn-shoot">Shoot</button>
+    <!-- <img id="img-show" src="http://simpleicon.com/wp-content/uploads/inbox-mail-empty-2.png"/> -->
+    <div id="block-imgs-wrapper"></div>
+  </div>
+
+  <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+
+    $(document).ready(function () {
+
+      var blockImgsWrapper = $("#block-imgs-wrapper")
+      var currentBlockImgs = null
+
+      $('.btn-shoot').click(function () {
+        var delay = (parseInt($("#input-delay").val()) || 5) * 1000
+        socket.emit("shoot", {
+          delay: delay
+        })
+        // $('#block-imgs').html('')
+        blockImgsWrapper.html(blockImgsWrapper.html() + '<div class="block-imgs"></div>')
+
+        var allBlocks = blockImgsWrapper.find('.block-imgs')
+        currentBlockImgs = $(allBlocks.get(allBlocks.length - 1))
+      })
+
+      socket.on('img', function (img) {
+        console.log(img)
+        currentBlockImgs.html(currentBlockImgs.html() + '<img src="' + img.path + '" />')
+        // $('#img-show').attr('src', img.path)
+      })
+
+      setInterval(function () {
+        $('#text-timestamp').text(Date.now())
+      }, 100)
+
+    })
+  </script>
+</body>

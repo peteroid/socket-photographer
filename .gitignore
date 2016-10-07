@@ -88,4 +88,4 @@ captures/
 # custom
 uploads/*
 models/*
-static/*
+static/**/*.jpg
